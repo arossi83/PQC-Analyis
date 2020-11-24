@@ -285,19 +285,40 @@ class mainWindow(object):
 
         workbook = xlsxwriter.Workbook(output)
         worksheet = workbook.add_worksheet()
-        tformat= workbook.add_format({'bold': True,'align': 'justify'})
+        tformat= workbook.add_format({'bold': True})
+        tformat.set_align('center')
         worksheet.set_column('A:A', 40)
-        worksheet.set_column('B:B', 20)
-        worksheet.set_column('C:C', 20)
-        worksheet.set_column('D:D', 20)
-        fieldnames = ['Measurement', 'Value', 'Error','ExtraInfo']
+        worksheet.set_column('B:C', 20)
+        worksheet.set_column('D:H', 15)
+        fieldnames = ['Measurement', 'Value', 'Error','ExtraInfo','Correction Factor','C.F. error','Derived Value','Der. Value error']
         for i,data in enumerate(fieldnames):
             worksheet.write(0,i,data,tformat)
         for row_num, row_data in enumerate(Res):
             for col_num, col_data in enumerate(row_data):
                 worksheet.write(row_num+1, col_num, col_data)
+        #FORMULAS
+        worksheet.write_formula('E9', '=(4*B4*13*13/3/33/33)*(1+13/2/(33-13))')
+        worksheet.write_formula('E10', '=(4*B2*13*13/3/33/33)*(1+13/2/(33-13))')
+        worksheet.write_formula('F9', '=(4*C4*13*13/3/33/33)*(1+13/2/(33-13))')
+        worksheet.write_formula('F10', '=(4*C2*13*13/3/33/33)*(1+13/2/(33-13))')
+        worksheet.write_formula('G9','=B9-E9')
+        worksheet.write_formula('H9','=SQRT(C9*C9+F9*F9)')
+        worksheet.write_formula('G10','=B10-E10')
+        worksheet.write_formula('H10','=SQRT(C10*C10+E10*E10)')
+        worksheet.write_formula('G15','=128.5*B7/B15')
+        worksheet.write_formula('H15','=G15*SQRT(C7*C7/(B7*B7)+C15*C15/(B15*B15))')
+        worksheet.write_formula('G16','=128.5*B4/B16')
+        worksheet.write_formula('H16','=G16*SQRT(C4*C4/(B4*B4)+C16*C16/(B16*B16))')
+        worksheet.write_formula('G17','=128.5*B3/B17')
+        worksheet.write_formula('H17','=G17*SQRT(C3*C3/(B3*B3)+C17*C17/(B17*B17))')
+        worksheet.write_formula('G21','=B21*0.000000000001/1.6E-19/5415000000/0.00505')
+        worksheet.write_formula('H21','=C21*0.000000000001/1.6E-19/5415000000/0.00505')
+        worksheet.write_formula('G22','=B22*0.000000000001/1.6E-19/5415000000/0.00723')
+        worksheet.write_formula('H22','=C22*0.000000000001/1.6E-19/5415000000/0.00723')
+
         workbook.close()
-                
+
+        
     def cleanup(self):
         self.master.destroy()
         
@@ -307,7 +328,7 @@ class mainWindow(object):
         
 if __name__ == "__main__":
     root=Tk()
-    root.title("TestGui")
+    root.title("PQC Analysis")
 
     dname=StringVar()
     dname.set("Please select a directory")

@@ -43,12 +43,18 @@ class WinDiodeCV:
 
         dd=diodecv(self.fname,[float(self.sMin1.get()),float(self.sMax1.get()),float(self.sMin2.get()),float(self.sMax2.get())])
 
-        if "DiodeCV" in fname:
+        if "DiodeCV" in fname and "flute" in fname:
             b=fname.split("DiodeCV")[1].split(".t")[0]
-        else:
-            b=fname.split("Diode_CV")[1].split(".t")[0]            
+        elif "Diode_CV" in fname and "flute" in fname:
+            b=fname.split("Diode_CV")[1].split(".t")[0]
+        elif "half" in fname and not "flute" in fname:
+            b=fname.split("CV")[1].split(".t")[0]
+
         dirD=os.path.dirname(os.path.abspath(fname))
-        self.img=dirD+"/DiodeCV_flute3_img"+b+".pdf"
+        if "half" in fname and not "flute" in fname:
+            self.img=dirD+"/Diode_half_CV_img"+b+".pdf"
+        else:
+            self.img=dirD+"/DiodeCV_flute3_img"+b+".pdf"
         self.result=[]
         self.result.append(self.title)
         self.result.append(dd[6])
