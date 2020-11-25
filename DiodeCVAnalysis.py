@@ -12,14 +12,7 @@ from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
-from mosfunc import WinMos
-from fetfunc import WinFET
-from gcdfunc import WinGCD
-from resfunc import WinRes
-from capacitorfunc import WinCap
-from dielbreakfunc import WinDielBreak
 from diodeCVfunc import WinDiodeCV
-from diodeIVfunc import WinDiodeIV
 from selfilewin import WinSel
 
 
@@ -30,9 +23,9 @@ def SelFileWindow(Win_class,names,indices):
     q=Win_class(win2,names,indices)
     return q.val.get()
     
-def new_window(Win_class,title,fname,const=1):
+def new_window(Win_class,title,fname,const,save):
     win2 = Toplevel(root)
-    q=Win_class(win2,title,fname,const)
+    q=Win_class(win2,title,fname,const,save)
     return q.result
     
 class mainWindow(object):
@@ -44,13 +37,19 @@ class mainWindow(object):
 
         frame1 = Frame(frame)
         frame1.pack(fill=X)
+        frame2 = Frame(frame)
+        frame2.pack(fill=X)
+        frame3 = Frame(frame)
+        frame3.pack(fill=X)
+
         self.lf=Label(frame1,textvariable=dname, anchor=W, justify=CENTER)
         self.lf.pack(side=LEFT, padx=5, pady=25, expand=True)        
 
-        frame3 = Frame(frame)
-        frame3.pack(fill=X)
-        self.b1=Button(frame3,text="Select File",command=self.LoadFile)
+        self.b1=Button(frame2,text="Select File",command=self.LoadFile)
         self.b1.pack(side=RIGHT, padx=5, expand=True)
+
+        self.outChk=Checkbutton(frame3, text="Save Fig", anchor=W, var=saveFig)
+        self.outChk.pack()
         
         self.b3=Button(master,text='Close',command=self.cleanup)
         self.b3.pack(side=RIGHT, padx=5, pady=5)
@@ -60,7 +59,7 @@ class mainWindow(object):
     def process(self):
         Res=[]
         print("Analyze DiodeCV data")
-        Res.append(new_window(WinDiodeCV,"Diode C/V Depletion Voltage",dname.get()))
+        Res.append(new_window(WinDiodeCV,"Diode C/V Depletion Voltage",dname.get()),1,saveFig.get())
         print("DiodeCV done")
 
 
@@ -78,6 +77,8 @@ if __name__ == "__main__":
 
     dname=StringVar()
     dname.set("Please select a File")
+    saveFig=StringVar()
+    saveFig.set(True)
     outfname=StringVar()
     outfname.set("")
 

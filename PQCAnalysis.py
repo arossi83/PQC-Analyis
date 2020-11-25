@@ -30,9 +30,9 @@ def SelFileWindow(Win_class,names,indices):
     q=Win_class(win2,names,indices)
     return q.val.get()
     
-def new_window(Win_class,title,fname,const=1):
+def new_window(Win_class,title,fname,const=1,save=True):
     win2 = Toplevel(root)
-    q=Win_class(win2,title,fname,const)
+    q=Win_class(win2,title,fname,const,save)
     return q.result
     
 class mainWindow(object):
@@ -44,279 +44,161 @@ class mainWindow(object):
 
         frame1 = Frame(frame)
         frame1.pack(fill=X)
-        self.lf=Label(frame1,textvariable=dname, anchor=W, justify=LEFT)
+        self.lf=Label(frame1,textvariable=dname, anchor=W, justify=CENTER)
         self.lf.pack(side=LEFT, padx=5, pady=25, expand=True)        
         self.b1=Button(frame1,text="Select Directory",command=self.LoadDir)
         self.b1.pack(side=RIGHT, padx=5, expand=True)
 
+
+        frame2 = Frame(frame)
+        frame2.pack(fill=BOTH)
+        self.lt=Label(frame2,text="Select the analysis to be done:",justify=CENTER,font=('Helvetica', 18, 'bold'))
+        self.lt.grid(row=0, column=0, columnspan=4, padx=5, pady=5)
+        self.chkFlute=[]        
+        self.chkList=[]
+        ick=0
+        self.chkFlute.append(Checkbutton(frame2, text="Flute1", font=('Helvetica', 14, 'bold'),justify=CENTER, anchor=W, var=ckFlute[0],command=self.SelFlute1Func))
+        self.chkFlute[0].grid(column=0, row=1)
+        self.chkFlute.append(Checkbutton(frame2, text="Flute2", font=('Helvetica', 14, 'bold'),justify=CENTER, anchor=W, var=ckFlute[1],command=self.SelFlute2Func))
+        self.chkFlute[1].grid(column=1, row=1)
+        self.chkFlute.append(Checkbutton(frame2, text="Flute3", font=('Helvetica', 14, 'bold'),justify=CENTER, anchor=W, var=ckFlute[2],command=self.SelFlute3Func))
+        self.chkFlute[2].grid(column=2, row=1)
+        self.chkFlute.append(Checkbutton(frame2, text="Flute4", font=('Helvetica', 14, 'bold'),justify=CENTER, anchor=W, var=ckFlute[3],command=self.SelFlute4Func))
+        self.chkFlute[3].grid(column=3, row=1)
+        
+        for col,fl in enumerate(flute):
+            for i in range(nM[fl]):
+                self.chkList.append(Checkbutton(frame2, text=mName[fl][i], justify=LEFT, anchor=W, var=ckVar[fl][i]))
+                self.chkList[ick].grid(column=col, row=i+2,sticky="nesw")
+                ick+=1
+
+        self.chkListA=Checkbutton(frame2, text="All",width=10, var=ckAll,relief=RAISED,font=('Helvetica', 14, 'bold'),command=self.SelAllFunc)
+        self.chkListA.grid(column=0, row=max(nM.values())+1,columnspan=2)
+        for row in range(max(nM.values())+1):
+            frame2.grid_rowconfigure(row, weight=1)
+        for col in range(len(flute)):
+            frame2.grid_columnconfigure(col, weight=1)        
+        
         frame3 = Frame(frame)
-        frame3.pack(fill=X)
+        frame3.pack(fill=BOTH)
         self.lfo=Label(frame3,text="Output File:", anchor=W, justify=LEFT, width=10)
-        self.lfo.pack(side=LEFT, padx=5, pady=5)
+        self.lfo.pack(side=LEFT, padx=5, pady=15)
         self.fo=Entry(frame3, textvariable=outfname, width=40)
-        self.fo.pack(fill=X, padx=5, expand=True)
+        self.fo.pack(side=LEFT,fill=X,padx=5, expand=True)
+        self.outChk=Checkbutton(frame3, text="Save Fig", anchor=W, var=saveFig)
+        self.outChk.pack(side=RIGHT)
+        self.outChk=Checkbutton(frame3, text="Report", anchor=W, var=createOut)
+        self.outChk.pack(side=RIGHT)
         
         self.b3=Button(master,text='Close',command=self.cleanup)
         self.b3.pack(side=RIGHT, padx=5, pady=5)
         self.b2=Button(master,text='Process',command=self.process)
         self.b2.pack(side=RIGHT)
 
+    def SelAllFunc(self):
+        temp=ckAll.get()
+        for col,fl in enumerate(flute):
+            ckFlute[col].set(temp)
+            for i in range(nM[fl]):
+                ckVar[fl][i].set(temp)
+
+    def SelFlute1Func(self):
+        temp=ckFlute[0].get()
+        for i in range(nM[flute[0]]):
+            ckVar[flute[0]][i].set(temp)
+
+    def SelFlute2Func(self):
+        temp=ckFlute[1].get()
+        for i in range(nM[flute[1]]):
+            ckVar[flute[1]][i].set(temp)
+            
+    def SelFlute3Func(self):
+        temp=ckFlute[2].get()
+        for i in range(nM[flute[2]]):
+            ckVar[flute[2]][i].set(temp)
+            
+    def SelFlute4Func(self):
+        temp=ckFlute[3].get()
+        for i in range(nM[flute[3]]):
+            ckVar[flute[3]][i].set(temp)
+            
     def process(self):
         Res=[]
         onlyfiles = [dname.get()+"/"+f for f in os.listdir(dname.get())]
-        indices = [i for i, s in enumerate(onlyfiles) if 'Poly' in s and not ('Chain' in s or 'Meander' in s) and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze Poly data")
-        Res.append(new_window(WinRes,"Polysilicon Resitance",fname,4.53))
-        print("Poly done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'pstop' in s and 'flute1' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze pStop data")
-        Res.append(new_window(WinRes,"p-stop Resistance",fname,4.53))
-        print("pStop done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'n+' in s and 'flute1' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze n+ data")
-        Res.append(new_window(WinRes,"n+ Resistance",fname,4.53))
-        print("n+ done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'MetalCover' in s and 'flute3' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze MetalCover data")
-        Res.append(new_window(WinRes,"MetalCover Resistance",fname,4.53))
-        print("MetalCover done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'PolyMeander' in s and 'flute2' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze PolyMeander data")
-        Res.append(new_window(WinRes,"Polysilicon Meander Resistance",fname))
-        print("PolyMeander done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'p+Cross' in s and 'flute3' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze p+Cross data")
-        Res.append(new_window(WinRes,"p+ Cross Resistance",fname,4.53))
-        print("p+Cross done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'BulckCross' in s and 'flute3' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze BulkCross data")
-        Res.append(new_window(WinRes,"BulkCross Resistance",fname,10.726*0.0187*1.218))
-        print("BulkCross done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'n+CBKR' in s and 'flute4' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze n+CBKR data")
-        Res.append(new_window(WinRes,"n+CBKR Resistance",fname))
-        print("n+CBKR done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'polyCBKR' in s and 'flute4' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze polyCBKR data")
-        Res.append(new_window(WinRes,"polyCBKR Resistance",fname))
-        print("polyCBKR done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'Poly_Chain' in s and 'flute4' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze PolyChain data")
-        Res.append(new_window(WinRes,"PolyChain Resistance",fname))
-        print("PolyChain done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'n+_Chain' in s and 'flute4' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze n+Chain data")
-        Res.append(new_window(WinRes,"n+Chain Resistance",fname))
-        print("n+Chain done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'p+_Chain' in s and 'flute4' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze p+Chain data")
-        Res.append(new_window(WinRes,"p+Chain Resistance",fname))
-        print("p+Chain done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'Metal_Meander_Chain' in s and 'flute3' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze MetalMeanderChain data")
-        Res.append(new_window(WinRes,"MetalMeanderChain Resistance",fname))
-        print("MetalMeanderChain done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'p+Bridge' in s and 'flute3' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze p+Bridge data")
-        Res.append(new_window(WinRes,"p+Bridge Resistance",fname))
-        print("p+Bridge done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'n+_linewidth' in s and 'flute2' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze n+Linewidth data")
-        Res.append(new_window(WinRes,"n+Linewidth Resistance",fname))
-        print("n+Linewidth done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'pstopLinewidth' in s and 'flute2' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze pstopLinewidth data")
-        Res.append(new_window(WinRes,"pstopLinewidth Resistance",fname))
-        print("pstopLinewidth done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'Capacitor' in s and 'flute1' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze Capacitor data")
-        Res.append(new_window(WinCap,"Capacitor Measurement",fname))
-        print("Capacitor done")
-        indices = [i for i, s in enumerate(onlyfiles) if 'FET' in s and 'flute1' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        print("Analyze FET data")
-        Res.append(new_window(WinFET,"FET Measurement",fname))
-        print("FET done")
-        print("Analyze MOS data")
-        indices = [i for i, s in enumerate(onlyfiles) if 'MOS' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        Res.append(new_window(WinMos,"MOS Measurement",fname))
-        print("MOS done")
-        print("Analyze GCD flute2 data")
-        indices = [i for i, s in enumerate(onlyfiles) if 'GCD' in s and 'flute2' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        Res.append(new_window(WinGCD,"Gated Diode Flute2",fname))
-        print("GCD flute2 done")
-        print("Analyze GCD flute4 data")
-        indices = [i for i, s in enumerate(onlyfiles) if 'GCD' in s and 'flute4' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        Res.append(new_window(WinGCD,"Gated Diode Flute4",fname))
-        print("GCD flute4 done")
-        print("Analyze DiodeCV data")
-        indices = [i for i, s in enumerate(onlyfiles) if ('DiodeCV' in s or 'Diode_CV' in s) and 'flute3' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        Res.append(new_window(WinDiodeCV,"Diode C/V Depletion Voltage",fname))
-        print("DiodeCV done")
-        print("Analyze DiodeIV data")
-        indices = [i for i, s in enumerate(onlyfiles) if ('DiodeIV' in s or 'Diode_IV' in s) and 'flute3' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        Res.append(new_window(WinDiodeIV,"Diode I/V",fname))
-        print("DiodeIV done")
-        print("Analyze Dielectric Break data")
-        indices = [i for i, s in enumerate(onlyfiles) if 'DielectricBreak' in s and 'flute2' in s and '.txt' in s ]
-        if len(indices)>1:
-            sel=SelFileWindow(WinSel,onlyfiles,indices)
-            fname=onlyfiles[indices[sel]]
-        else:
-            fname=onlyfiles[indices[0]]
-        Res.append(new_window(WinDielBreak,"Dielectric Breakdown",fname))
-        print("Dielectric Break done")
 
-        output=dname.get()+"/"+outfname.get()+".xlsx"
+        for fl in flute:
+            for i in range(nM[fl]):
+                indices=[]
+                if ckVar[fl][i].get():
+                    #print(("%s - %d/%d - %s - %s" % (fl,i,nM[fl],mTag[fl][i],mType[fl][i])))
+                    for fidx,fstr in enumerate(onlyfiles):
+                        for tag in mTag[fl][i]:
+                            if tag in fstr and fl in fstr and ".txt" in fstr:
+                                indices.append(fidx)
+                                break;
+                    if len(indices)>1:
+                        sel=SelFileWindow(WinSel,onlyfiles,indices)
+                        fname=onlyfiles[indices[sel]]
+                    else:
+                        fname=onlyfiles[indices[0]]
+                    print(("Analyze %s  data" % (mTag[fl][i][0])))
+                    if mType[fl][i]=="C":
+                        Res.append(new_window(WinCap,mName[fl][i],fname,1,saveFig.get()))
+                    elif mType[fl][i]=="CV":
+                        Res.append(new_window(WinDiodeCV,mName[fl][i],fname,1,saveFig.get()))
+                    elif mType[fl][i]=="D":
+                        Res.append(new_window(WinDielBreak,mName[fl][i],fname,1,saveFig.get()))
+                    elif mType[fl][i]=="F":
+                        Res.append(new_window(WinFET,mName[fl][i],fname,1,saveFig.get()))
+                    elif mType[fl][i]=="G":
+                        Res.append(new_window(WinGCD,mName[fl][i],fname,1,saveFig.get()))
+                    elif mType[fl][i]=="IV":
+                        Res.append(new_window(WinDiodeIV,mName[fl][i],fname,1,saveFig.get()))
+                    elif mType[fl][i]=="M":
+                        Res.append(new_window(WinMos,mName[fl][i],fname,1,saveFig.get()))
+                    else:
+                        Res.append(new_window(WinRes,mName[fl][i],fname,mType[fl][i],saveFig.get()))
+                    print(("%s done" % (mTag[fl][i][0])))
+                else:
+                    Res.append([0,0,"SKIPPED"])
 
-        workbook = xlsxwriter.Workbook(output)
-        worksheet = workbook.add_worksheet()
-        tformat= workbook.add_format({'bold': True})
-        tformat.set_align('center')
-        worksheet.set_column('A:A', 40)
-        worksheet.set_column('B:C', 20)
-        worksheet.set_column('D:H', 15)
-        fieldnames = ['Measurement', 'Value', 'Error','ExtraInfo','Correction Factor','C.F. error','Derived Value','Der. Value error']
-        for i,data in enumerate(fieldnames):
-            worksheet.write(0,i,data,tformat)
-        for row_num, row_data in enumerate(Res):
-            for col_num, col_data in enumerate(row_data):
-                worksheet.write(row_num+1, col_num, col_data)
-        #FORMULAS
-        worksheet.write_formula('E9', '=(4*B4*13*13/3/33/33)*(1+13/2/(33-13))')
-        worksheet.write_formula('E10', '=(4*B2*13*13/3/33/33)*(1+13/2/(33-13))')
-        worksheet.write_formula('F9', '=(4*C4*13*13/3/33/33)*(1+13/2/(33-13))')
-        worksheet.write_formula('F10', '=(4*C2*13*13/3/33/33)*(1+13/2/(33-13))')
-        worksheet.write_formula('G9','=B9-E9')
-        worksheet.write_formula('H9','=SQRT(C9*C9+F9*F9)')
-        worksheet.write_formula('G10','=B10-E10')
-        worksheet.write_formula('H10','=SQRT(C10*C10+E10*E10)')
-        worksheet.write_formula('G15','=128.5*B7/B15')
-        worksheet.write_formula('H15','=G15*SQRT(C7*C7/(B7*B7)+C15*C15/(B15*B15))')
-        worksheet.write_formula('G16','=128.5*B4/B16')
-        worksheet.write_formula('H16','=G16*SQRT(C4*C4/(B4*B4)+C16*C16/(B16*B16))')
-        worksheet.write_formula('G17','=128.5*B3/B17')
-        worksheet.write_formula('H17','=G17*SQRT(C3*C3/(B3*B3)+C17*C17/(B17*B17))')
-        worksheet.write_formula('G21','=B21*0.000000000001/1.6E-19/5415000000/0.00505')
-        worksheet.write_formula('H21','=C21*0.000000000001/1.6E-19/5415000000/0.00505')
-        worksheet.write_formula('G22','=B22*0.000000000001/1.6E-19/5415000000/0.00723')
-        worksheet.write_formula('H22','=C22*0.000000000001/1.6E-19/5415000000/0.00723')
+        if createOut.get():
+            output=dname.get()+"/"+outfname.get()+".xlsx"
 
-        workbook.close()
+            workbook = xlsxwriter.Workbook(output)
+            worksheet = workbook.add_worksheet()
+            tformat= workbook.add_format({'bold': True})
+            tformat.set_align('center')
+            worksheet.set_column('A:A', 40)
+            worksheet.set_column('B:C', 20)
+            worksheet.set_column('D:H', 15)
+            fieldnames = ['Measurement', 'Value', 'Error','ExtraInfo','Correction Factor','C.F. error','Derived Value','Der. Value error']
+            for i,data in enumerate(fieldnames):
+                worksheet.write(0,i,data,tformat)
+                for row_num, row_data in enumerate(Res):
+                    for col_num, col_data in enumerate(row_data):
+                        worksheet.write(row_num+1, col_num, col_data)
+            #FORMULAS
+            worksheet.write_formula('E20', '=(4*B4*13*13/3/33/33)*(1+13/2/(33-13))')
+            worksheet.write_formula('E22', '=(4*B3*13*13/3/33/33)*(1+13/2/(33-13))')
+            worksheet.write_formula('F20', '=(4*C4*13*13/3/33/33)*(1+13/2/(33-13))')
+            worksheet.write_formula('F22', '=(4*C5*13*13/3/33/33)*(1+13/2/(33-13))')
+            worksheet.write_formula('G20','=B20-E20')
+            worksheet.write_formula('H20','=SQRT(C20*C20+F20*F20)')
+            worksheet.write_formula('G22','=B22-E22')
+            worksheet.write_formula('H22','=SQRT(C22*C22+E22*E122)')
+            worksheet.write_formula('G18','=128.5*B17/B18')
+            worksheet.write_formula('H18','=G18*SQRT(C17*C17/(B17*B17)+C18*C18/(B18*B18))')
+            worksheet.write_formula('G8','=128.5*B4/B8')
+            worksheet.write_formula('H8','=G8*SQRT(C4*C4/(B4*B4)+C8*C8/(B8*B8))')
+            worksheet.write_formula('G11','=128.5*B5/B11')
+            worksheet.write_formula('H11','=G11*SQRT(C5*C5/(B5*B5)+C11*C11/(B11*B11))')
+            worksheet.write_formula('G10','=B10*0.000000000001/1.6E-19/5415000000/0.00505')
+            worksheet.write_formula('H10','=C10*0.000000000001/1.6E-19/5415000000/0.00505')
+            worksheet.write_formula('G21','=B21*0.000000000001/1.6E-19/5415000000/0.00723')
+            worksheet.write_formula('H21','=C21*0.000000000001/1.6E-19/5415000000/0.00723')
+
+            workbook.close()
 
         
     def cleanup(self):
@@ -332,6 +214,80 @@ if __name__ == "__main__":
 
     dname=StringVar()
     dname.set("Please select a directory")
+
+    flute=["flute1","flute2","flute3","flute4"]
+    
+    nM={"flute1": 6,
+        "flute2": 5,
+        "flute3": 7,
+        "flute4": 6}
+    
+    mName={"flute1":
+           ["Capacitor Measurement",
+            "Polysilicon Resitance",
+            "n+ Resistance",
+            "p-stop Resistance",
+            "FET Measurement",
+            "MOS Measurement"],
+           "flute2":
+           ["n+Linewidth Resistance",
+            "Polysilicon Meander Resistance",
+            "Gated Diode Flute2",
+            "pstopLinewidth Resistance",
+            "Dielectric Breakdown"],
+           "flute3":
+           ["BulkCross Resistance",
+            "Diode I/V",
+            "Diode C/V Depletion Voltage",
+            "MetalCover Resistance",
+            "p+ Cross Resistance",
+            "p+Bridge Resistance",
+            "MetalMeanderChain Resistance"],
+           "flute4":
+           ["n+CBKR Resistance",
+            "Gated Diode Flute4",
+            "polyCBKR Resistance",
+            "PolyChain Resistance",
+            "p+Chain Resistance",
+            "n+Chain Resistance"]}
+
+    mTag={"flute1": [["Capacitor"],["Poly"],["n+"],["pstop"],["FET"],["MOS"]],
+           "flute2": [["n+_linewidth"],["PolyMeander"],["GCD"],["pstopLinewidth"],["DielectricBreak"]],
+           "flute3": [["BulckCross"],["DiodeIV","Diode_IV"],["DiodeCV","Diode_CV"],["MetalCover"],["p+Cross"],["p+Bridge"],["Metal_Meander_Chain"]],
+           "flute4": [["n+CBKR"],["GCD"],["polyCBKR"],["Poly_Chain"],["p+_Chain"],["n+_Chain"]]}
+
+
+    
+    mType={"flute1":
+           ["C",4.53,4.53,4.53,"F","M"],
+           "flute2":
+           [1,1,"G",1,"D"],
+           "flute3":
+           [10.726*0.0187*1.218,"IV","CV",4.53,4.53,1,1],
+           "flute4":
+           [1,"G",1,1,1,1]}
+
+    
+    ckVar={"flute1": [],
+           "flute2": [],
+           "flute3": [],
+           "flute4": []}
+    ckFlute=[]
+    for col,fl in enumerate(flute):
+        ckFlute.append(BooleanVar())
+        ckFlute[col].set(True)
+        for i in range(nM[fl]):
+            ckVar[fl].append(BooleanVar())
+            ckVar[fl][i].set(True)
+
+
+    ckAll=BooleanVar()
+    ckAll.set(True)
+
+    createOut=BooleanVar()
+    createOut.set(True)
+    saveFig=BooleanVar()
+    saveFig.set(True)
     outfname=StringVar()
     outfname.set("")
 

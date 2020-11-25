@@ -15,12 +15,13 @@ import numpy as np
 
 
 class WinDielBreak:
-    def __init__(self, root,title,fname,const):
+    def __init__(self, root,title,fname,const,save):
         self.root = root
         self.root.geometry("+150+50")
         self.fname =fname
         self.const =const
         self.title=title
+        self.save=save
         self.root.wm_title(self.title)
         self.sMin1=StringVar()
         self.sMin1.set("-999")
@@ -31,8 +32,6 @@ class WinDielBreak:
         frame.pack(fill=BOTH, expand=True)
         frameD1 = Frame(self.root)
         frameD1.pack(fill=X, expand=True)
-        frameD2 = Frame(self.root)
-        frameD2.pack(fill=X, expand=True)
         
         self.frame1 = Frame(frame)
         self.frame1.pack(fill=BOTH)
@@ -57,7 +56,7 @@ class WinDielBreak:
         self.ax.xaxis.get_offset_text().set_rotation(-90)
         self.ax.set_title(self.title)
         self.ax.set_xlabel("Voltage [V]",loc='right')
-        self.ax.set_ylabel("Current [nAF]",loc='top')
+        self.ax.set_ylabel("Current [nA]",loc='top')
         self.ax.text(0.5,0.2, ("Result:\n%.2f$\pm$%.2f [V]" % (dd[2],dd[3])), fontsize=10,horizontalalignment='center', style='normal', transform=self.ax.transAxes, bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 5})
         
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.frame1)  # A tk.DrawingArea.
@@ -68,15 +67,14 @@ class WinDielBreak:
         self.toolbar.update()
         self.canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
-        self.lem1=Label(frameD1,text="Min1:", anchor=W,justify=LEFT, width=6)
-        self.lem1.pack(side=LEFT, padx=5, pady=5)
-        self.em1=Entry(frameD1, textvariable=self.sMin1, width=10)
-        self.em1.pack(side=LEFT)#, padx=5, pady=5)
-
-        self.leM1=Label(frameD1,text="Max1:", anchor=W,justify=LEFT, width=6)
-        self.leM1.pack(side=LEFT, padx=5, pady=5)
-        self.eM1=Entry(frameD1, textvariable=self.sMax1, width=10)
-        self.eM1.pack(side=LEFT)#, padx=5, pady=5)
+        self.lem1=Label(frameD1,text="Min1:", justify=RIGHT, width=4)
+        self.lem1.grid(column=0,row=0)
+        self.em1=Entry(frameD1, textvariable=self.sMin1,justify=LEFT,width=7)
+        self.em1.grid(column=1,row=0)
+        self.leM1=Label(frameD1,text="Max1:", justify=RIGHT, width=4)
+        self.leM1.grid(column=2,row=0)
+        self.eM1=Entry(frameD1, textvariable=self.sMax1, justify=LEFT,width=7)
+        self.eM1.grid(column=3,row=0)
                 
         self.b3=Button(self.root,text='Next',command=self.closeExt)
         self.b3.pack(side=RIGHT, padx=5, pady=5)
@@ -86,7 +84,8 @@ class WinDielBreak:
         self.root.wait_window(self.root)
         
     def closeExt(self):
-        self.fig.savefig(self.img)
+        if self.save:
+            self.fig.savefig(self.img)
         self.root.destroy()
 
     def UpdateDielBreak(self):
@@ -103,11 +102,12 @@ class WinDielBreak:
         self.ax.axhline(y=1,c="orange",ls='dashed')
         self.ax.axvline(x=dd[2],c="green")
         self.ax.ticklabel_format(axis='y',style='sci',scilimits=(-1,2),useOffset=True,useMathText=True)
-        self.ax.ticklabel_format(axis='x',style='sci',scilimits=(0,2),useOffset=True,useMathText=True)
+        self.ax.xaxis.get_offset_text().set_position((1,0.1))
+        self.ax.xaxis.get_offset_text().set_rotation(-90)
         self.ax.set_title(self.title)
         self.ax.set_xlabel("Voltage [V]",loc='right')
         self.ax.set_ylabel("Current [nA]",loc='top')
-        self.ax.text(0.5,0.2, ("Result:\n%.2f$\pm$%.2f [pF]" % (dd[2],dd[3])), fontsize=10,horizontalalignment='center', style='normal', transform=self.ax.transAxes, bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 5})
+        self.ax.text(0.5,0.2, ("Result:\n%.2f$\pm$%.2f [V]" % (dd[2],dd[3])), fontsize=10,horizontalalignment='center', style='normal', transform=self.ax.transAxes, bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 5})
         self.canvas.draw()
         self.toolbar.update()
 
